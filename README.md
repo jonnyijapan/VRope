@@ -5,7 +5,7 @@ Some changes include:
 
 - APP_PTMRATIO needs to be defined somewhere. I define it in the apps's .pch file, then make use of that when defining PTM_RATIO. (all in one place)
 - I needed to detach the "bodyB" (sometimes called body2) and "leave the rope hanging", or sometimes attach another body as "bodyB". replaceBodyOfRopeWithBody... does this.
-The way I make the rope "hang" is I create an invisible b2body of a small size and just attach it. I needed to recreate the joint to make it work. Make this can be made in a better way. Beware of memory mistakes.
+The way I make the rope "hang" is I create an invisible b2body of a small size and just attach it. I needed to recreate the joint to make it work. Maybe this can be made in a better way. Beware of memory mistakes.
 - Other things I forgot...
 
 VRope 0.5
