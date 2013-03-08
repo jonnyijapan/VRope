@@ -1,17 +1,17 @@
 /*
- 
+
  MIT License.
- 
- Copyright (c) 2012 Flightless Ltd.  
+
+ Copyright (c) 2012 Flightless Ltd.
  Copyright (c) 2010 Clever Hamster Games.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
-*/
+
+ */
 
 //
 //  VRope.m
@@ -21,11 +21,43 @@
 
 #import "VRope.h"
 
+@interface VRope ()
+@property (nonatomic, retain) NSMutableArray* myRopeSprites;
+@end
 
 @implementation VRope
 
+@synthesize myRopeSprites; // retain
+
 #ifdef BOX2D_H
--(id)init:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode {
+//@synthesize theJoint; // retain
+#endif
+
+-(void)dealloc {
+    /*
+	 for(int i=0;i<numPoints;i++) {
+	 [[vPoints objectAtIndex:i] release];
+	 if(i!=numPoints-1)
+	 [[vSticks objectAtIndex:i] release];
+	 }
+	 [vPoints removeAllObjects];
+	 [vSticks removeAllObjects];
+	 */
+
+	//#warning Testing using this removeSprites!
+    [self removeSprites];
+	self.myRopeSprites = nil; //[ropeSprites release];
+
+	[vPoints release];
+	[vSticks release];
+#ifdef BOX2D_H
+	self.theJoint = NULL;
+#endif
+	[super dealloc];
+}
+
+#ifdef BOX2D_H
+-(id)initWithBody1:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode { // this in use!
 	if((self = [super init])) {
 		bodyA = body1;
 		bodyB = body2;
@@ -38,7 +70,7 @@
 }
 
 // Flightless, init rope using a joint between two bodies
--(id)init:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode {
+-(id)initWithJoint:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode {
     if((self = [super init])) {
 		jointAB = joint;
 		CGPoint pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
@@ -83,7 +115,7 @@
         pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
         pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
     }
-    
+
     // update points with pre-integrated gravity
 	[self updateWithPoints:pointA pointB:pointB gxdt:gravityX*dt gydt:gravityY*dt];
 }
@@ -99,10 +131,10 @@
         pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
         pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
     }
-    
+
     // pre-integrate current gravity
     CGPoint gravity = ccpMult([VPoint getGravity], dt);
-        
+
     // update points with pre-integrated gravity
 	[self updateWithPoints:pointA pointB:pointB gxdt:gravity.x gydt:gravity.y];
 }
@@ -118,14 +150,35 @@
         pointA = ccp(jointAB->GetAnchorA().x*PTM_RATIO,jointAB->GetAnchorA().y*PTM_RATIO);
         pointB = ccp(jointAB->GetAnchorB().x*PTM_RATIO,jointAB->GetAnchorB().y*PTM_RATIO);
     }
-    
+
     // pre-integrate gravity, based on average position of bodies
     CGPoint gravityAtPoint = ccp(-0.5f*(pointA.x+pointB.x), -0.5f*(pointA.y+pointB.y));
     gravityAtPoint = ccpMult(ccpNormalize(gravityAtPoint), -10.0f*dt); // nb. vrope uses negative gravity!
-    
+
     // update points with pre-integrated gravity
 	[self updateWithPoints:pointA pointB:pointB gxdt:gravityAtPoint.x gydt:gravityAtPoint.y];
 }
+
+-(b2Joint*)theJoint {
+	//DLog(@"read theJoint: %p", _theJoint);
+	return _theJoint;
+}
+-(void)setTheJoint:(b2Joint *)theJoint {
+	//DLog(@"write setTheJoint: %p", theJoint);
+	_theJoint = theJoint;
+	//DLog(@"write _theJoint: %p", _theJoint);
+}
+
+-(b2Body*)theBodyB {
+	//DLog(@"read theBodyB: %p", bodyB);
+	return bodyB;
+}
+-(void)setTheBodyB:(b2Body *)theBodyB {
+	//DLog(@"write setTheBodyB: %p", theBodyB);
+	bodyB = theBodyB;
+	//DLog(@"write setTheBodyB: %p", bodyB);
+}
+
 
 #endif
 
@@ -140,10 +193,11 @@
 -(void)createRope:(CGPoint)pointA pointB:(CGPoint)pointB {
 	vPoints = [[NSMutableArray alloc] init];
 	vSticks = [[NSMutableArray alloc] init];
-	ropeSprites = [[NSMutableArray alloc] init];
+	self.myRopeSprites = [NSMutableArray array]; //ropeSprites = [[NSMutableArray alloc] init];
 	float distance = ccpDistance(pointA,pointB);
 	int segmentFactor = 20; // 16; //12; //increase value to have less segments per rope, decrease to have more segments
 	numPoints = distance/segmentFactor;
+
 	CGPoint diffVector = ccpSub(pointB,pointA);
 	float multiplier = distance / (numPoints-1);
 	antiSagHack = 0.1f; //HACK: scale down rope points to cheat sag. set to 0 to disable, max suggested value 0.1
@@ -165,20 +219,20 @@
 			VPoint *point2 = [[vSticks objectAtIndex:i] getPointB];
 			CGPoint stickVector = ccpSub(ccp(point1.x,point1.y),ccp(point2.x,point2.y));
 			float stickAngle = ccpToAngle(stickVector);
-            
+
             // cocos 1.x
             //CCSprite *tmpSprite = [CCSprite spriteWithBatchNode:spriteSheet rect:CGRectMake(0,0,multiplier,[[[spriteSheet textureAtlas] texture] pixelsHigh]/CC_CONTENT_SCALE_FACTOR())]; // Flightless, retina fix
-            
+
             // cocos 2.x
             CCSprite* tmpSprite = [CCSprite spriteWithTexture:spriteSheet.texture rect:CGRectMake(0,0,multiplier,[[[spriteSheet textureAtlas] texture] pixelsHigh]/CC_CONTENT_SCALE_FACTOR())]; // Flightless, retina fix
             tmpSprite.batchNode = spriteSheet;
-            
+
 			ccTexParams params = {GL_LINEAR,GL_LINEAR,GL_REPEAT,GL_REPEAT};
 			[tmpSprite.texture setTexParameters:&params];
 			[tmpSprite setPosition:ccpMidpoint(ccp(point1.x,point1.y),ccp(point2.x,point2.y))];
 			[tmpSprite setRotation:-1 * CC_RADIANS_TO_DEGREES(stickAngle)];
 			[spriteSheet addChild:tmpSprite];
-			[ropeSprites addObject:tmpSprite];
+			[self.myRopeSprites addObject:tmpSprite]; //[ropeSprites addObject:tmpSprite];
 		}
 	}
 }
@@ -191,30 +245,30 @@
 		CGPoint tmpVector = ccpAdd(pointA, ccpMult(ccpNormalize(diffVector),multiplier*i*(1-antiSagHack)));
 		VPoint *tmpPoint = [vPoints objectAtIndex:i];
 		[tmpPoint setPos:tmpVector.x y:tmpVector.y];
-		
+
 	}
 }
 
 -(void)removeSprites {
 	for(int i=0;i<numPoints-1;i++) {
-		CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
+		CCSprite *tmpSprite = [self.myRopeSprites objectAtIndex:i]; //[ropeSprites objectAtIndex:i];
 		[spriteSheet removeChild:tmpSprite cleanup:YES];
 	}
-	[ropeSprites removeAllObjects];
-	[ropeSprites release];
+	[self.myRopeSprites removeAllObjects]; //[ropeSprites removeAllObjects];
+	self.myRopeSprites = nil; //[ropeSprites release];
 }
 
 -(void)updateWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB dt:(float)dt {
 	//manually set position for first and last point of rope
 	[[vPoints objectAtIndex:0] setPos:pointA.x y:pointA.y];
 	[[vPoints objectAtIndex:numPoints-1] setPos:pointB.x y:pointB.y];
-	
+
 	//update points, apply gravity
 	for(int i=1;i<numPoints-1;i++) {
 		[[vPoints objectAtIndex:i] applyGravity:dt];
 		[[vPoints objectAtIndex:i] update];
 	}
-	
+
 	//contract sticks
 	int iterations = 4;
 	for(int j=0;j<iterations;j++) {
@@ -228,13 +282,13 @@
 	//manually set position for first and last point of rope
 	[[vPoints objectAtIndex:0] setPos:pointA.x y:pointA.y];
 	[[vPoints objectAtIndex:numPoints-1] setPos:pointB.x y:pointB.y];
-	
+
 	//update points, apply pre-integrated gravity
 	for(int i=1;i<numPoints-1;i++) {
 		[[vPoints objectAtIndex:i] applyGravityxdt:gxdt gydt:gydt];
 		[[vPoints objectAtIndex:i] update];
 	}
-	
+
 	//contract sticks
 	int iterations = 4;
 	for(int j=0;j<iterations;j++) {
@@ -253,56 +307,64 @@
 			CGPoint point1_ = ccp(point1.x,point1.y);
 			CGPoint point2_ = ccp(point2.x,point2.y);
 			float stickAngle = ccpToAngle(ccpSub(point1_,point2_));
-			CCSprite *tmpSprite = [ropeSprites objectAtIndex:i];
+			CCSprite *tmpSprite = [self.myRopeSprites objectAtIndex:i]; //[ropeSprites objectAtIndex:i];
 			[tmpSprite setPosition:ccpMidpoint(point1_,point2_)];
 			[tmpSprite setRotation: -CC_RADIANS_TO_DEGREES(stickAngle)];
 		}
-	}	
+	}
 }
 
 /* opengl es 1.1 only
--(void)debugDraw {
-	//Depending on scenario, you might need to have different Disable/Enable of Client States
-	//glDisableClientState(GL_TEXTURE_2D);
-	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	//glDisableClientState(GL_COLOR_ARRAY);
-	//set color and line width for ccDrawLine
-	glColor4f(0.0f,0.0f,1.0f,1.0f);
-	glLineWidth(5.0f);
-	for(int i=0;i<numPoints-1;i++) {
-		//"debug" draw
-		VPoint *pointA = [[vSticks objectAtIndex:i] getPointA];
-		VPoint *pointB = [[vSticks objectAtIndex:i] getPointB];
-		ccDrawPoint(ccp(pointA.x,pointA.y));
-		ccDrawPoint(ccp(pointB.x,pointB.y));
-		//ccDrawLine(ccp(pointA.x,pointA.y),ccp(pointB.x,pointB.y));
-	}
-	//restore to white and default thickness
-	glColor4f(1.0f,1.0f,1.0f,1.0f);
-	glLineWidth(1);
-	//glEnableClientState(GL_TEXTURE_2D);
-	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	//glEnableClientState(GL_COLOR_ARRAY);
-}
-*/
+ -(void)debugDraw {
+ //Depending on scenario, you might need to have different Disable/Enable of Client States
+ //glDisableClientState(GL_TEXTURE_2D);
+ //glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+ //glDisableClientState(GL_COLOR_ARRAY);
+ //set color and line width for ccDrawLine
+ glColor4f(0.0f,0.0f,1.0f,1.0f);
+ glLineWidth(5.0f);
+ for(int i=0;i<numPoints-1;i++) {
+ //"debug" draw
+ VPoint *pointA = [[vSticks objectAtIndex:i] getPointA];
+ VPoint *pointB = [[vSticks objectAtIndex:i] getPointB];
+ ccDrawPoint(ccp(pointA.x,pointA.y));
+ ccDrawPoint(ccp(pointB.x,pointB.y));
+ //ccDrawLine(ccp(pointA.x,pointA.y),ccp(pointB.x,pointB.y));
+ }
+ //restore to white and default thickness
+ glColor4f(1.0f,1.0f,1.0f,1.0f);
+ glLineWidth(1);
+ //glEnableClientState(GL_TEXTURE_2D);
+ //glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+ //glEnableClientState(GL_COLOR_ARRAY);
+ }
+ */
 
--(void)dealloc {
-    /*
-	for(int i=0;i<numPoints;i++) {
-		[[vPoints objectAtIndex:i] release];
-		if(i!=numPoints-1)
-			[[vSticks objectAtIndex:i] release];
+-(void)replaceBodyOfRopeWithBody:(b2Body*)bodyNew inWorld:(b2World*)world destroyPreviousBody:(const BOOL)DESTROYPREVIOUSBODY maxlength:(const float32)MAXLENGTH {
+	b2Joint* jointOld = self.theJoint;
+	b2Body* bodyAnchor = jointOld->GetBodyA();
+	b2Body* bodyOld = jointOld->GetBodyB();
+
+	// Create an all new joint?
+	b2RopeJointDef jd;
+	jd.bodyA = bodyAnchor; //define bodies
+	jd.bodyB = bodyNew;
+	jd.localAnchorA = b2Vec2(0,0); //define anchors
+	jd.localAnchorB = b2Vec2(0,0);
+
+	jd.maxLength = MAXLENGTH;
+	b2Joint* jointNew = world->CreateJoint(&jd); //create joint
+	[self setTheJoint:jointNew];
+	// Set bodyC to rope?? Not sure if this works.
+	[self setTheBodyB:bodyNew];
+
+	// Destroy old joint (maybe this is incorrect use?)
+	world->DestroyJoint(jointOld);
+
+	if (DESTROYPREVIOUSBODY) {
+		world->DestroyBody(bodyOld);
 	}
-	[vPoints removeAllObjects];
-	[vSticks removeAllObjects];
-    */
-    
-    //[self removeSprites];
-    [ropeSprites release];
-    
-	[vPoints release];
-	[vSticks release];
-	[super dealloc];
 }
+
 
 @end

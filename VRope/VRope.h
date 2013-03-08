@@ -1,23 +1,23 @@
 /*
- 
- MIT License.
- 
- Copyright (c) 2012 Flightless Ltd.  
- Copyright (c) 2010 Clever Hamster Games.
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
-*/
 
+ MIT License.
+
+ Copyright (c) 2012 Flightless Ltd.
+ Copyright (c) 2010 Clever Hamster Games.
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ */
+// https://github.com/mb1/VRope
 //
 //  VRope.h - 0.5
 //
 //  Modified by Flightless www.flightless.co.nz 20/4/2012
-//  Used in Flightless's game Bee Leader - http://www.flightless.co.nz/beeleader 
+//  Used in Flightless's game Bee Leader - http://www.flightless.co.nz/beeleader
 //
 //  Modifications:
 //  added retina fix (tested on iPhone 4s and iPad 3)
@@ -47,41 +47,41 @@
  [verletRope updateWithPreIntegratedOriginGravity:dt;] // update rope by pre-integrating the gravity each step (optimised for changing gravity), nb. uses gravity at origin (0,0)
  [verletRope updateWithPoints:pointA pointB:pointB gxdt:gxdt gydt:gydt; // (internal) update with support for pre-integrating the gravity each step (optimised for changing gravity)
 
- 
+
  CREATE:
  // create joint between bodyA and bodyB
  b2RopeJoint* bodyAbodyBJoint = (b2RopeJoint*)b2World->CreateJoint(&bodyAbodyBJointDef);
- 
+
  // create batchnode and vrope for joint
  CCSpriteBatchNode *ropeSegmentBatchNode = [CCSpriteBatchNode batchNodeWithFile:@"ropesegment.png"];
  [self addChild:ropeSegmentBatchNode];
  VRope *verletRope = [[VRope alloc] init:bodyAbodyBJoint batchNode:ropeSegmentBatchNode];
- 
+
  // or, create vrope between bodies
  VRope *verletRope = [[VRope alloc] init:body1 body2:body2 batchNode:ropeSegmentBatchNode];
- 
+
  UPDATING:
  // update vrope (like original VRope, without any changing gravity)
  [verletRope update:dt];
  [verletRope updateSprites]; // nb. doesn't need to be in draw loop (could be called internally)
- 
+
  // update vrope (using global gravity, nb. will affect all ropes!)
  CGPoint newGravity = ccp(0.7f,0.7f); // update gravity to something else (based on your simulation, interactivity)
  [VPoint setGravityX:newGravity.x Y:newGravity.y];
  [verletRope update:dt];
  [verletRope updateSprites]; // nb. doesn't need to be in draw loop (could be called internally)
- 
+
  // update vrope (example using gravity for specific ropes or points, the gravity component is preintegrated before being applied to points)
  CGPoint newGravity = ccp(0.7f,0.7f); // update gravity to something else (based on your simulation, interactivity)
  [verletRope updateWithPreIntegratedGravity:dt gravityX:newGravity gravityY:newGravity]; // update gravity for each rope (based on your simulation, interactivity)
  [verletRope updateSprites]; // nb. doesn't need to be in draw loop (could be called internally)
- 
+
  nb. the example [verletRope updateWithPreIntegratedOriginGravity:dt] has gravity origin at (0,0) and uses
-     an average of bodyA and bodyB positions to determine which way is 'down' for each rope.
-     This was used for Flightless's game Bee Leader - http://www.flightless.co.nz/beeleader 
-     Obviously, you can change this method or add others to suit your own simulation.
- 
-*/
+ an average of bodyA and bodyB positions to determine which way is 'down' for each rope.
+ This was used for Flightless's game Bee Leader - http://www.flightless.co.nz/beeleader
+ Obviously, you can change this method or add others to suit your own simulation.
+
+ */
 
 
 //
@@ -91,58 +91,58 @@
 //
 
 /*
-Verlet Rope for cocos2d
- 
-Visual representation of a rope with Verlet integration.
-The rope can't (quite obviously) collide with objects or itself.
-This was created to use in conjuction with Box2d's new b2RopeJoint joint, although it's not strictly necessary.
-Use a b2RopeJoint to physically constrain two bodies in a box2d world and use VRope to visually draw the rope in cocos2d. (or just draw the rope between two moving or static points)
+ Verlet Rope for cocos2d
 
-*** IMPORTANT: VRope does not create the b2RopeJoint. You need to handle that yourself, VRope is only responsible for rendering the rope
-*** By default, the rope is fixed at both ends. If you want a free hanging rope, modify VRope.h and VRope.mm to only take one body/point and change the update loops to include the last point. 
- 
-HOW TO USE:
-Import VRope.h into your class
- 
-CREATE:
-To create a verlet rope, you need to pass two b2Body pointers (start and end bodies of rope)
-and a CCSpriteBatchNode that contains a single sprite for the rope's segment. 
-The sprite should be small and tileable horizontally, as it gets repeated with GL_REPEAT for the necessary length of the rope segment.
+ Visual representation of a rope with Verlet integration.
+ The rope can't (quite obviously) collide with objects or itself.
+ This was created to use in conjuction with Box2d's new b2RopeJoint joint, although it's not strictly necessary.
+ Use a b2RopeJoint to physically constrain two bodies in a box2d world and use VRope to visually draw the rope in cocos2d. (or just draw the rope between two moving or static points)
 
-ex:
-CCSpriteBatchNode *ropeSegmentSprite = [CCSpriteBatchNode batchNodeWithFile:@"ropesegment.png" ]; //create a spritesheet 
-[self addChild:ropeSegmentSprite]; //add batchnode to cocos2d layer, vrope will be responsible for creating and managing children of the batchnode, you "should" only have one batchnode instance
-VRope *verletRope = [[VRope alloc] init:bodyA pointB:bodyB spriteSheet:ropeSegmentSprite];
+ *** IMPORTANT: VRope does not create the b2RopeJoint. You need to handle that yourself, VRope is only responsible for rendering the rope
+ *** By default, the rope is fixed at both ends. If you want a free hanging rope, modify VRope.h and VRope.mm to only take one body/point and change the update loops to include the last point.
 
- 
-UPDATING:
-To update the verlet rope you need to pass the time step
-ex:
-[verletRope updateRope:dt];
+ HOW TO USE:
+ Import VRope.h into your class
 
- 
-DRAWING:
-From your layer's draw loop, call the updateSprites method
-ex:
-[verletRope updateSprites];
+ CREATE:
+ To create a verlet rope, you need to pass two b2Body pointers (start and end bodies of rope)
+ and a CCSpriteBatchNode that contains a single sprite for the rope's segment.
+ The sprite should be small and tileable horizontally, as it gets repeated with GL_REPEAT for the necessary length of the rope segment.
 
-Or you can use the debugDraw method, which uses cocos2d's ccDrawLine method
-ex:
-[verletRope debugDraw];
- 
-REMOVING:
-To remove a rope you need to call the removeSprites method and then release:
-[verletRope removeSprites]; //remove the sprites of this rope from the spritebatchnode
-[verletRope release];
- 
-There are also a few helper methods to use the rope without box2d bodies but with CGPoints only.
-Simply remove the Box2D.h import and use the "WithPoints" methods.
- 
+ ex:
+ CCSpriteBatchNode *ropeSegmentSprite = [CCSpriteBatchNode batchNodeWithFile:@"ropesegment.png" ]; //create a spritesheet
+ [self addChild:ropeSegmentSprite]; //add batchnode to cocos2d layer, vrope will be responsible for creating and managing children of the batchnode, you "should" only have one batchnode instance
+ VRope *verletRope = [[VRope alloc] init:bodyA pointB:bodyB spriteSheet:ropeSegmentSprite];
 
-For help you can find me on the cocos2d forums, username: patrickC
-Good luck :) 
 
-*/
+ UPDATING:
+ To update the verlet rope you need to pass the time step
+ ex:
+ [verletRope updateRope:dt];
+
+
+ DRAWING:
+ From your layer's draw loop, call the updateSprites method
+ ex:
+ [verletRope updateSprites];
+
+ Or you can use the debugDraw method, which uses cocos2d's ccDrawLine method
+ ex:
+ [verletRope debugDraw];
+
+ REMOVING:
+ To remove a rope you need to call the removeSprites method and then release:
+ [verletRope removeSprites]; //remove the sprites of this rope from the spritebatchnode
+ [verletRope release];
+
+ There are also a few helper methods to use the rope without box2d bodies but with CGPoints only.
+ Simply remove the Box2D.h import and use the "WithPoints" methods.
+
+
+ For help you can find me on the cocos2d forums, username: patrickC
+ Good luck :)
+
+ */
 #import <Foundation/Foundation.h>
 #import "VPoint.h"
 #import "VStick.h"
@@ -150,29 +150,35 @@ Good luck :)
 #import "Box2D.h"
 
 //PTM_RATIO defined here is for testing purposes, it should obviously be the same as your box2d world or, better yet, import a common header where PTM_RATIO is defined
-#define PTM_RATIO 32
+#define PTM_RATIO APP_PTMRATIO
 
 @interface VRope : NSObject {
 	int numPoints;
 	NSMutableArray *vPoints;
 	NSMutableArray *vSticks;
-	NSMutableArray *ropeSprites;
+	//NSMutableArray *ropeSprites;
 	CCSpriteBatchNode* spriteSheet;
 	float antiSagHack;
-	#ifdef BOX2D_H
+#ifdef BOX2D_H
 	b2Body *bodyA;
 	b2Body *bodyB;
-    b2Joint *jointAB;
-	#endif
+    b2Joint *jointAB; // This seems not be used with 「init:body2:batchNode:」!
+	b2Joint* _theJoint;
+#endif
 }
 #ifdef BOX2D_H
--(id)init:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode;
--(id)init:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode; // Flightless, init rope using a joint between two bodies
+-(id)initWithBody1:(b2Body*)body1 body2:(b2Body*)body2 batchNode:(CCSpriteBatchNode*)ropeBatchNode; // this in use!
+-(id)initWithJoint:(b2Joint*)joint batchNode:(CCSpriteBatchNode*)ropeBatchNode; // Flightless, init rope using a joint between two bodies
 -(void)update:(float)dt;
 -(void)updateWithPreIntegratedGravity:(float)dt; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)updateWithPreIntegratedGravity:(float)dt gravityX:(float)gravityX gravityY:(float)gravityY; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)updateWithPreIntegratedOriginGravity:(float)dt; // Flightless, update rope by pre-integrating the gravity each step (optimised for changing gravity)
 -(void)reset;
+@property b2Joint* theJoint;
+@property float32 maxLength; // Couldn't access from joint so I stored it here :-P
+@property b2Body* theBodyB;
+// replaceBodyOfRopeWithBody needs the maxLength to be same previously really or the rope will look funny...
+-(void)replaceBodyOfRopeWithBody:(b2Body*)bodyNew inWorld:(b2World*)world destroyPreviousBody:(const BOOL)DESTROYPREVIOUSBODY maxlength:(const float32)MAXLENGTH;
 #endif
 -(id)initWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB spriteSheet:(CCSpriteBatchNode*)spriteSheetArg;
 -(void)createRope:(CGPoint)pointA pointB:(CGPoint)pointB;
