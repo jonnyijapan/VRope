@@ -1,3 +1,6 @@
+VRope-jonnyijapan 0.5.2
+Sprites were not removed in dealloc. Tried using "removeSprites" to remove the sprites, but then the app crashed. Rewrote the sprites container so it does not crash.
+
 VRope-jonnyijapan 0.5.1
 I just extended this stuff with what I needed for now. It's still a work in progress.
 
